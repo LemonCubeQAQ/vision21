@@ -73,7 +73,7 @@ init_camera:
 
 #else
 
-DaHengCamera Camera;
+    DaHengCamera Camera;
 init_camera:
     image_buffer_front_ = 0;
     image_buffer_rear_ = 0;
@@ -103,7 +103,7 @@ init_camera:
                 ++image_buffer_rear_;
                 break;
             }
-            case DetectMode::RUME:{
+            case DetectMode::RUNE:{
 
                 break;
             }
@@ -128,8 +128,13 @@ void RmVision::ImageConsumer(){
 
     while(image_buffer_rear_ <= image_buffer_front_);
 
-    armordector.GetTarget(detect_mode_, image_buffer_[image_buffer_front_%5]);
-    ++image_buffer_front_;
+
+        //TODO: Recieve serial information
+        armordector.GetTarget(detect_mode_, image_buffer_[image_buffer_front_%5]);
+        ++image_buffer_front_;
+
+        //TODO: Sent data
+ 
 
     }
 

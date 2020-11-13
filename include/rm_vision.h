@@ -4,7 +4,6 @@
 #include"armordector.h"
 #include<mutex>
 #include<iostream>
-#include<opencv2/opencv.hpp>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
@@ -16,11 +15,6 @@
 namespace horizon{ 
 using namespace std;
 using namespace boost::asio;
-
-enum class DetectMode{
-    RUME,
-    ARMOR
-};
 
 // Vision main fuction
 // Using imageProducer function to get image
