@@ -14,6 +14,7 @@
 
 namespace horizon{ 
 using namespace std;
+using namespace cv;
 using namespace boost::asio;
 
 // Vision main fuction
@@ -21,6 +22,15 @@ using namespace boost::asio;
 // Using ImageConsumer function to process image
 // Passing the parameters to Serial function for communicating with STM32
 class RmVision{
+
+enum SerialSize{
+    SENT_BYTES_SIZE = 14,
+    READ_BYTES_SIZE = 12
+};
+
+enum BufferSize{
+    IMGAE_BUFFER = 5
+};
 
 public:
     RmVision();
@@ -32,16 +42,20 @@ public:
     void Serial();
 
 private:
+    DaHengCamera* camera_point_;
+
+private:
     static DetectMode detect_mode_;
-    static cv::Mat image_buffer_[5];
+    static Mat image_buffer_[IMGAE_BUFFER];
+    static int64 time_buffer_[IMGAE_BUFFER];
     static unsigned int image_buffer_front_;
     static unsigned int image_buffer_rear_;
 
 private:
     static io_service iosev_;
     static serial_port sp_;
-    unsigned char sent_bytes[14];
-    unsigned char read_bytes[12]; 
+    unsigned char sent_bytes_[SENT_BYTES_SIZE];
+    unsigned char read_bytes_[READ_BYTES_SIZE]; 
 
 };
 

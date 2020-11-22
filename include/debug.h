@@ -3,26 +3,7 @@
 #define DEBUG_H_
 
 #define DEBUG_
-#ifdef DEBUG_
 
-    #define SHOW_DEBUG_MESSAGES_
-
-    #define CAMERA_DEBUG_
-    #ifdef CAMERA_DEBUG_
-
-        #define DAHENG_CAMERA
-
-
-    #else
-
-        #denfine VEDIO
-
-    #endif
-
-
-
-
-#endif
 
 
 

@@ -11,6 +11,8 @@ namespace constants{
 const int kExposureTime = 2000;
 const int kExposureGain = 300;
 
+const int kMinLedArea = 15;
+const int kMaxLedArea = 3e3;
 
 }
 
