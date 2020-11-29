@@ -86,7 +86,8 @@ void RmVision::ImageProducer(){
 
 void RmVision::ImageConsumer(){
 
-    ArmorDector armordector;
+    //TODO(YeahooQAQ): I need to fix it that Enemycolor should be easy to configure before contest 
+    ArmorDector armordector(EnemyColor::RED);
 
     while(true){
 
