@@ -34,6 +34,8 @@ set(CPP_SOURCES
     src/rm_vision.cpp
     src/DahengCamera.cpp
     src/armordector.cpp
+    src/predictor.cpp
+    src/kalman_filter.cpp
 )
 
 ## 指定生成目标

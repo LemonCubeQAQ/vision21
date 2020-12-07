@@ -1,4 +1,3 @@
-
 #include<thread>
 #include"rm_vision.h"
 using namespace horizon;

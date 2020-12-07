@@ -1,8 +1,6 @@
 #include"debug.h"
-#include"constants.h"
+#include"variables.h"
 #include"rm_vision.h"
-#include"DaHengCamera.h"
-
 #include<thread>
 //命名空间以小写字母命名. 最高级命名空间的名字取决于项目名称
 
@@ -29,45 +27,46 @@ RmVision::RmVision()
     sp_.set_option(serial_port::character_size(8)); // 设置字母位数为8位
 }
 
-RmVision::~RmVision(){}
+RmVision::~RmVision(){
+    if(camera_point_ != nullptr){
+        delete camera_point_;
+        camera_point_ = nullptr;
+    }
+}
 
 void RmVision::ImageProducer(){
-
     while(true){
 
         switch(detect_mode_){
             case DetectMode::ARMOR:{
-                if(camera_point_ = nullptr){
-                    image_buffer_front_ = 0;
-                    image_buffer_rear_ = 0;                    
-                    camera_point_ = new DaHengCamera;
-                    camera_point_->SetResolution();
-                    camera_point_->SetExposureTime();
-                    //设置曝光增益000
-                    camera_point_->SetGain();
-                    //设置是否自动白平衡
-                    camera_point_->Set_BALANCE_AUTO(0);
-                    //手动设置白平衡通道及系数，此之前需关闭自动白平衡
-                    // camera.Set_BALANCE(0,40);
-                    camera_point_->SetExposureTime(constants::kExposureTime);
-                    camera_point_->SetGain(3, constants::kExposureGain);
-
-                    while(camera_point_->StreamOn());
-                    
-                }
-                else{
-
+                if(camera_point_ != nullptr){
                     while(image_buffer_rear_ - image_buffer_front_ > IMGAE_BUFFER);
 
                     if(camera_point_->GetMat(image_buffer_[image_buffer_rear_%IMGAE_BUFFER])){
                         time_buffer_[image_buffer_rear_%IMGAE_BUFFER] = getTickCount();       
-                        ++image_buffer_rear_;                                 
+                        ++image_buffer_rear_;                    
                     }
                     else{
                         delete camera_point_;
                         camera_point_ = nullptr;
-                    }
-
+                    }                       
+                }
+                else{
+                    camera_point_ = new DaHengCamera;
+                    while(!camera_point_->StartDevice());
+                    camera_point_->SetResolution();
+                    while(!camera_point_->StreamOn());
+                    camera_point_->SetExposureTime();
+                    //设置曝光增益000
+                    camera_point_->SetGain();
+                    //设置是否自动白平衡
+                    camera_point_->Set_BALANCE_AUTO(1);
+                    //手动设置白平衡通道及系数，此之前需关闭自动白平衡
+                    // camera.Set_BALANCE(0,40);
+                    camera_point_->SetExposureTime(constants::kExposureTime);
+                    camera_point_->SetGain(3, constants::kExposureGain);
+                    image_buffer_front_ = 0;
+                    image_buffer_rear_ = 0;                         
                 }
                 break;
             }
@@ -87,21 +86,21 @@ void RmVision::ImageProducer(){
 void RmVision::ImageConsumer(){
 
     //TODO(YeahooQAQ): I need to fix it that Enemycolor should be easy to configure before contest 
-    ArmorDector armordector(EnemyColor::RED);
+    ArmorDector armordector;
 
     while(true){
-
+        unsigned short buffer_index = image_buffer_rear_;
         while(image_buffer_rear_ <= image_buffer_front_);
 
         //Recieve serial information
-        unsigned short buffer_index = image_buffer_front_;
-        Mat src = image_buffer_[image_buffer_front_%IMGAE_BUFFER].clone();
+        Mat src = image_buffer_[buffer_index%IMGAE_BUFFER].clone();
+        cv::imshow("src", src);
+        cv::waitKey(1);
         ++image_buffer_front_;  
 
         //TODO(YeahooQAQ): If you want use ROI, just do it here and 
 
-        armordector.GetTarget(detect_mode_, src, time_buffer_[image_buffer_front_%IMGAE_BUFFER]);
-
+        armordector.GetHitPos(detect_mode_, src, time_buffer_[image_buffer_front_%IMGAE_BUFFER]);
         //TODO(YeahooQAQ): Sent data
  
 
@@ -111,16 +110,26 @@ void RmVision::ImageConsumer(){
 }
 
 void RmVision::Serial(){
-/*     write(sp, buffer("Hello world", 12)); */
 
     // 向串口读数据
     while(true){
-        char buf[1];
         read(sp_, buffer(read_bytes_));
-        for(int i = 0; i < 14;i++){
-            cout<<hex<<read_bytes_[i]<<" ";
+
+        if(read_bytes_[0] == 0xaa && read_bytes_[READ_BYTES_SIZE-1] == 0xbb){
+            //TODO(YeahooQAQ): get the data from the read_bytes_
         }
-        cout<<endl;
+        else{
+            char trash[1] = {0x00};
+            for(int i = 0; i < READ_BYTES_SIZE; i++){ cout<<hex<<read_bytes_[i]<<" "; }
+            do{
+                read(sp_, buffer(trash));
+            }while(trash[0] != 0xbb);
+        }
+
+        if(false){
+            //TODO(YeahooQAQ): fill the data into the sent_bytes_
+            write(sp_, buffer(sent_bytes_, SENT_BYTES_SIZE));
+        }
         iosev_.run();
     }
 }

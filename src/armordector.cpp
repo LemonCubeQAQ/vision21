@@ -2,14 +2,13 @@
 #define ARMORDECTOR_H
 
 #include "armordector.h"
-#include "constants.h"
 
 namespace horizon{
 using namespace std;
 
-ArmorDector::ArmorDector(EnemyColor enemy_color)
+ArmorDector::ArmorDector()
     :
-    enemy_color_(enemy_color),
+    enemy_color_(constants::kEnemyColor),
     time_per_tick_(1.0/getTickFrequency()),    
     frame_counter_(0),
     start_tick_(0),
@@ -18,48 +17,45 @@ ArmorDector::ArmorDector(EnemyColor enemy_color)
     detect_mode_(DetectMode::NONE),
     src_image_(),
     binary_image_(),
-    aultimate_image_(), 
+    aultimate_image_(),
     led_array_{},
     armor_num_(0),
-    armor_array_{}{
-
-
-
-};
+    armor_array_{},
+    predictor_()
+{};
 
 ArmorDector::~ArmorDector(){};
 
-void ArmorDector::GetTarget(DetectMode detect_mode, cv::Mat& src_image, int64& tick){
+const Vector3f& ArmorDector::GetHitPos(DetectMode detect_mode, cv::Mat& src_image, int64& tick){
     start_tick_ = tick;
     src_image_ = src_image;
 
     switch(detect_mode){
         case DetectMode::ARMOR:{
             if(GetAllTarget()){
-                SelectArmor();
+                //predictor_.GetArmorData();
             }
             else{
-
+                predictor_.LostTarget();
             }
             break;
         }
         case DetectMode::RUNE:{
             if(GetAllRune()){
-                SelectRune();
+                //predictor_.GetArmorData()
             }
             else{
-
+                predictor_.LostTarget();
             }
             break;
         }
         default:
+            predictor_.LostTarget();
             break;
     }
 
-
     //TODO(YeahooQAQ): Prediction
-
-
+    return predictor_.GetPredictedTarget();
 }
 
 bool ArmorDector::GetAllTarget(){
@@ -83,69 +79,35 @@ bool ArmorDector::GetAllRune(){
     return true;
 }
 
-void ArmorDector::SelectArmor(){
-
-
-
-
-
-}
-
-void ArmorDector::SelectRune(){}
-
 
 void ArmorDector::SeparateColor(){
-    //TODO: separate color witch you want
-    
-    //Example is copied from Horizon-2020
+
     cv::Mat splited_image[3];
     split(src_image_, splited_image);
 
-    float RGrayWeightValue = 97;
-    Mat binary_image_t = Mat::zeros(src_image_.size(), CV_8UC1);
-
     switch(enemy_color_){
         case EnemyColor::RED:{
-            unsigned short image_rows = src_image_.rows;
-            unsigned short image_cols = src_image_.cols;
-            for(unsigned short image_row_index = 0; image_row_index < image_rows; image_row_index++){
-                uchar* bin = binary_image_t.ptr<uchar>(image_row_index);
-                uchar* r = splited_image[2].ptr<uchar>(image_row_index);
-                uchar* g = splited_image[1].ptr<uchar>(image_row_index);
-                uchar* b= splited_image[0].ptr<uchar>(image_row_index);
-
-                for(int image_col_index = 0; image_col_index < image_cols; image_col_index++){
-                    bin[image_col_index] = b[image_col_index]<(g[image_col_index]+r[image_col_index])*RGrayWeightValue*0.01?255:0;
-                }
-            }
-            binary_image_ = splited_image[2] > 130;
+            binary_image_ = splited_image[2] - 0.3f*splited_image[1] - 0.7f*splited_image[0];
+            
             break;
         }
         case EnemyColor::BLUE:{
-            unsigned short image_rows = src_image_.rows;
-            unsigned short image_cols = src_image_.cols;
-            for(unsigned short image_row_index = 0; image_row_index < image_rows; image_row_index++){
-                uchar* bin = binary_image_t.ptr<uchar>(image_row_index);
-                uchar* r = splited_image[2].ptr<uchar>(image_row_index);
-                uchar* g = splited_image[1].ptr<uchar>(image_row_index);
-                uchar* b= splited_image[0].ptr<uchar>(image_row_index);
+            
 
-                for(int image_col_index = 0; image_col_index < image_cols; image_col_index++){
-                    bin[image_col_index] = r[image_col_index]<(g[image_col_index]+b[image_col_index])*RGrayWeightValue*0.01?255:0;
-                }
-            }
-            binary_image_ = splited_image[0] > 130;
             break;
         }
     }
 
-    binary_image_ -= binary_image_t;
-
 }
 
 void ArmorDector::AdditionalProcess(){
-    blur(binary_image_, binary_image_,Size(5,5));
-    medianBlur(binary_image_, binary_image_,3);
+    threshold(binary_image_, binary_image_, 120, 255, CV_THRESH_BINARY);
+    blur(binary_image_, binary_image_,Size(3,5));
+    threshold(binary_image_, binary_image_, 20, 255, CV_THRESH_BINARY);
+    blur(binary_image_, binary_image_,Size(3,3));
+    imshow("b" , binary_image_);
+    waitKey(1);
+    aultimate_image_ = src_image_.clone();
 }
 
 
@@ -154,7 +116,7 @@ unsigned short ArmorDector::GetAllLed(){
     vector<std::vector<cv::Point>> led_contours;
     vector<cv::Vec4i> hierarchy;
     RotatedRect led_rect;
-    findContours(aultimate_image_, led_contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_NONE);
+    findContours(binary_image_, led_contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_NONE);
 
     unsigned short contours_size = static_cast<unsigned short>(led_contours.size());
     unsigned short led_num= 0;
@@ -169,34 +131,42 @@ unsigned short ArmorDector::GetAllLed(){
         led_rect = minAreaRect(led_contour);
 
         Led led;
-        //TODO(YeahooQAQ): Maybe I should add vertex to the LED data
         Point2f vertex[4];    
         led_rect.points(vertex);        
-        //The order is bottomLeft, topLeft, topRight, bottomRight.clockwise
-        const Point2f& bottomLeft = vertex[0];
-        const Point2f& topLeft = vertex[1];
-        const Point2f& topRight = vertex[2];
+        sort(vertex, vertex + 4, ledCmpY);
+        sort(vertex, vertex + 2, ledCmpX);
+        sort(vertex+2, vertex+4, ledCmpX);
+        const Point2f& bottomLeft = vertex[2];
+        const Point2f& topLeft = vertex[0];
+        const Point2f& topRight = vertex[1];
         const Point2f& bottomRight = vertex[3];
+
         led.top_point_ = (topLeft + topRight) * 0.5f; 
         led.bottom_point_ = (bottomLeft + bottomRight) * 0.5f;
         led.center_ =  (led.top_point_ + led.bottom_point_) * 0.5f;
 
-        Point2f point_delta_vertical = led.top_point_ - led.bottom_point_;
+        Point2f point_delta_vertical = led.bottom_point_ - led.top_point_;
         led.length_ = sqrt(point_delta_vertical.x * point_delta_vertical.x + point_delta_vertical.y * point_delta_vertical.y);
         led.slope_ = point_delta_vertical.x / point_delta_vertical.y;
-        Point2f point_delta_horizontal = (topRight + bottomRight - topLeft - bottomLeft) *0.5f;
-        float led_width = sqrt(point_delta_horizontal.x * point_delta_horizontal.x + point_delta_horizontal.y * point_delta_horizontal.y);
-        float led_heightVSwidth = led.length_ / led_width;
 
-        if( led_heightVSwidth > constants::kLedMaxHeightVSWidth 
-            || led_heightVSwidth < constants::kLedMinHeightVSWidth
-            || led.slope_ > constants::kLedMaxSlope
+        Point2f point_delta_horizontal = (topRight - topLeft);        
+        led.width_ = sqrt(point_delta_horizontal.x * point_delta_horizontal.x + point_delta_horizontal.y * point_delta_horizontal.y);
+        led.ratio_ = led.length_ / led.width_;
+
+        if( led.ratio_ > constants::kLedMaxHeightVSWidth
+            || led.ratio_ < constants::kLedMinHeightVSWidth
+            || abs(led.slope_) > constants::kLedMaxSlope
         ) continue;
 
         led_array_[led_num++] = led;
+        line(src_image_, topLeft, topRight,Scalar(0, 0, 255), 2, 8);
+        line(src_image_, topLeft, bottomLeft,Scalar(0, 255, 255), 2, 8);
+        line(src_image_, bottomRight, topRight,Scalar(0, 255, 255), 2, 8);
+        line(src_image_, bottomRight, bottomLeft,Scalar(0, 0, 255), 2, 8);        
 
     }
-
+    imshow("led", src_image_);
+    waitKey(1);
     return led_num;
 }
 
@@ -206,49 +176,75 @@ unsigned short ArmorDector::GetAllArmor(const unsigned short& led_num){
     bool is_selected[led_num];
     //some problems
     memset(is_selected, false, led_num);
-    sort(led_array_, led_array_ + led_num, ledCmp);
+    sort(led_array_, led_array_ + led_num, ledCmpSlope);
 
     for(unsigned short i = 0; i < led_num; i++){
+        int index = -1;
+        const Led& led1 = led_array_[i];
+        int RatioWidthCmpHeight;
+        float min_distance;
+        float min_ratio;
+        float led_width_mul_ratio = constants::kAromorWidthCmpLedWidth * led1.width_;
         for(unsigned short j = i + 1; j < led_num; j++){
-            if(is_selected[i] || is_selected[j]) continue;
-            
-            const Led& led1 = led_array_[i];
+            if(is_selected[i] || is_selected[j]
+                || led1.ratio_ * led_array_[j].ratio_ < 0.0f
+            ) continue;
             const Led& led2 = led_array_[j];
             float length_ratio = led1.length_ / led2.length_;
-            if(length_ratio < constants::kLedMinLengthRatio || length_ratio > constants::kLedMaxlengthRatio) continue;
-            if(abs(led1.slope_ - led2.slope_) > constants::kLedSlopeDelta) continue;
+            float ratio_delta = abs(abs(led1.ratio_) - abs(led2.ratio_));
+            if(length_ratio < constants::kLedMinLengthRatio || length_ratio > constants::kLedMaxlengthRatio
+                ||  abs(led1.slope_ - led2.slope_) > constants::kLedSlopeDelta, ratio_delta < constants::kLedRatioDelta
+            ) continue;
             
             Point2i center_delta = led1.center_ - led2.center_;
-            int center_distance = sqrt(center_delta.x * center_delta.x + center_delta.y * center_delta.y);
-
-            if(abs(center_delta.x) > abs(center_delta.y) 
-                || abs(center_delta.x) * constants::kLedMaxRatioWidthCmpHeight < abs(center_delta.y)
+            float center_distance = sqrt(center_delta.x * center_delta.x + center_delta.y * center_delta.y);
+            RatioWidthCmpHeight = 2 * center_distance / static_cast<int>(led1.length_ + led2.length_);
+            if(abs(center_delta.x) < constants::kArmorCenterSlope * abs(center_delta.y)
+                || constants::kLedMaxRatioWidthCmpHeight < RatioWidthCmpHeight
             ) continue;
-            is_selected[i] = true;
-            is_selected[j] = true; 
-            int RatioWidthCmpHeight = 2 * center_distance / (led1.length_ + led2.length_);
 
-            Armor& armor = armor_array_[armor_num];
-            if(RatioWidthCmpHeight < constants::kArmorThreshold){
-                armor.armor_type_ = ArmorType::SMALL;
+            if(led_width_mul_ratio < center_distance) continue;
+            if(index == -1){
+                index = j;
+                min_distance = center_distance;
+                min_ratio = ratio_delta;
             }
             else{
-                armor.armor_type_ = ArmorType::LARGE;
-            }
-            armor.left_led_[0] = led1.top_point_;
-            armor.left_led_[1] = led1.bottom_point_;
-            armor.right_led_[0] = led2.top_point_;
-            armor.right_led_[1] = led2.bottom_point_;
-
-            if(led1.center_.x > led2.center_.x){
-                swap(armor.left_led_, armor.right_led_);
+                if(0.8f * (min_distance - center_distance) + 0.2f * (min_ratio - ratio_delta) < 0.0f){
+                    index = j;
+                    min_distance = center_distance;
+                    min_ratio = ratio_delta;
+                }
             }
 
-            armor_num++;
-            break;
         }
+        if(index == -1) continue;
+        is_selected[i] = true;
+        is_selected[index] = true;
+        Armor& armor = armor_array_[armor_num];
+        if(RatioWidthCmpHeight < constants::kArmorTypeThreshold){
+            armor.armor_type_ = ArmorType::SMALL;
+        }
+        else{
+            armor.armor_type_ = ArmorType::LARGE;
+        }
+        armor.left_led_[0] = led1.top_point_;
+        armor.left_led_[1] = led1.bottom_point_;
+        armor.right_led_[0] = led_array_[index].top_point_;
+        armor.right_led_[1] = led_array_[index].bottom_point_;
+        if(led1.center_.x > led_array_[index].center_.x){
+            swap(armor.left_led_, armor.right_led_);
+        }
+        line(aultimate_image_, armor.left_led_[0], armor.left_led_[1],Scalar(0, 0, 255), 2, 8);
+        line(aultimate_image_, armor.right_led_[0], armor.left_led_[0],Scalar(0, 0, 255), 2, 8);
+        line(aultimate_image_, armor.right_led_[1], armor.left_led_[1],Scalar(0, 0, 255), 2, 8);
+        line(aultimate_image_, armor.right_led_[1], armor.right_led_[0],Scalar(0, 0, 255), 2, 8);        
+        armor_num++;
         if(armor_num == ARMOR_SIZE) break;
     }
+
+    imshow("armor", aultimate_image_);
+    waitKey(1);
     return armor_num;
 }
 
@@ -318,7 +314,7 @@ void ArmorDector::SolveAngle(Armor& armor, const std::vector<cv::Point2f>& point
             cv::solvePnP(point3D, point2D, caremaMatrix, distCoeffs, rvecs, tvecs);  //解算x，y，z 三轴偏移量
 
             tx = tvecs.ptr<double>(0)[0];
-            ty = tvecs.ptr<double>(0)[1];
+            ty = -tvecs.ptr<double>(0)[1];
             tz = tvecs.ptr<double>(0)[2];
             break;
         }
@@ -331,7 +327,7 @@ void ArmorDector::SolveAngle(Armor& armor, const std::vector<cv::Point2f>& point
             tx = tvecs.ptr<double>(0)[0];
             ty = -tvecs.ptr<double>(0)[1];
             tz = tvecs.ptr<double>(0)[2];
-
+            break;
         } */
     }
 

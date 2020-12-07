@@ -2,6 +2,7 @@
 #define RM_VISION_H_
 
 #include"armordector.h"
+#include"DaHengCamera.h"
 #include<mutex>
 #include<iostream>
 #include <boost/asio.hpp>
