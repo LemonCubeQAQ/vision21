@@ -18,7 +18,8 @@ public:
     ~ArmorDector();
 
 public:
-    const Vector3f& GetHitPos(DetectMode detect_mode, Mat& src_image, int64& tick);
+    const Vector3f& GetHitPos(DetectMode detect_mode, Mat& src_image);
+    inline void ConfigureParameters(const float& pitch, const float& yaw, int64& tick);
 
 private:
     bool GetAllTarget();
@@ -38,13 +39,6 @@ private:
 
 private:
     const EnemyColor enemy_color_;
-    const double time_per_tick_;    
-    short frame_counter_;
-    int64 start_tick_;
-    int64 end_tick;
-    int64 average_tick_per_frame_;
-
-private:
     DetectMode detect_mode_;
     Mat src_image_;
     Mat binary_image_;
@@ -61,7 +55,7 @@ private:
 private:
     //竖直优先
     static bool ledCmpSlope(const Led a, const Led b){
-        return abs(a.slope_) < abs(b.slope_); 
+        return a.length_ < b.length_; 
     }
     //y优先
     static bool ledCmpY(const Point2f a, const Point2f b){

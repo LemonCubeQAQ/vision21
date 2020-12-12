@@ -1,9 +1,10 @@
 #ifndef RM_VISION_H_
 #define RM_VISION_H_
-
+#include"debug.h"
+#include"variables.h"
 #include"armordector.h"
 #include"DaHengCamera.h"
-#include<mutex>
+#include<thread>
 #include<iostream>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
@@ -33,6 +34,16 @@ enum BufferSize{
     IMGAE_BUFFER = 5
 };
 
+enum class SerialState{
+    WAIT_DATA,
+    SEND_DATA
+};
+
+union float2uc{
+    float f;
+    uchar uc[4];
+};
+
 public:
     RmVision();
     ~RmVision();
@@ -43,21 +54,59 @@ public:
     void Serial();
 
 private:
-    DaHengCamera* camera_point_;
+    DaHengCamera* camera_ptr_;
 
 private:
-    static DetectMode detect_mode_;
     static Mat image_buffer_[IMGAE_BUFFER];
     static int64 time_buffer_[IMGAE_BUFFER];
     static unsigned int image_buffer_front_;
     static unsigned int image_buffer_rear_;
 
 private:
+    static SerialState serial_state_;
+    static DetectMode detect_mode_;
+    static float2uc read_pitch_;
+    static float2uc read_yaw_;
+    static float2uc read_distance_;
+    static float2uc send_pitch_;
+    static float2uc send_yaw_;
+    static float2uc send_distance_;
+
+private:
     static io_service iosev_;
     static serial_port sp_;
     unsigned char sent_bytes_[SENT_BYTES_SIZE];
-    unsigned char read_bytes_[READ_BYTES_SIZE]; 
+    unsigned char read_bytes_[READ_BYTES_SIZE];
 
+private:
+    inline void ConfigureSendData(){
+        sent_bytes_[1] = send_pitch_.uc[0];
+        sent_bytes_[2] = send_pitch_.uc[1];
+        sent_bytes_[3] = send_pitch_.uc[2];
+        sent_bytes_[4] = send_pitch_.uc[3];
+        sent_bytes_[5] = send_yaw_.uc[0];
+        sent_bytes_[6] = send_yaw_.uc[1];
+        sent_bytes_[7] = send_yaw_.uc[2];
+        sent_bytes_[8] = send_yaw_.uc[3];
+        sent_bytes_[9] = send_distance_.uc[0];
+        sent_bytes_[10] = send_distance_.uc[1];
+        sent_bytes_[11] = send_distance_.uc[2];
+        sent_bytes_[12] = send_distance_.uc[3];
+    }
+    inline void ConfigureReadData(){
+        read_pitch_.uc[0] = read_bytes_[1];
+        read_pitch_.uc[1] = read_bytes_[2];
+        read_pitch_.uc[2] = read_bytes_[3];
+        read_pitch_.uc[3] = read_bytes_[4];
+        read_yaw_.uc[0] = read_bytes_[5];
+        read_yaw_.uc[1] = read_bytes_[6];
+        read_yaw_.uc[2] = read_bytes_[7];
+        read_yaw_.uc[3] = read_bytes_[8];
+        read_distance_.uc[0] = read_bytes_[9];
+        read_distance_.uc[1] = read_bytes_[10];
+        read_distance_.uc[2] = read_bytes_[11];
+        read_distance_.uc[3] = read_bytes_[12];
+    }
 };
 
 

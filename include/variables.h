@@ -79,11 +79,11 @@ const float kLedMinHeightVSWidth = 1.7f;
 const float kLedMaxHeightVSWidth = 11.0f;
 const float kLedMaxSlope = 0.8f;
 
-const float kLedMinLengthRatio = 0.9f;
-const float kLedMaxlengthRatio = 1.1f;
+const float kLedMinLengthRatio = 0.95f;
+const float kLedMaxlengthRatio = 1.05f;
 
-const float kLedSlopeDelta = 0.1f;
-const float kLedRatioDelta = 0.1f;
+const float kLedSlopeDelta = 0.01f;
+const float kLedRatioDelta = 0.01f;
 const float kArmorCenterSlope = 3.0f;
 const float kAromorWidthCmpLedWidth = 15.0f;
 const int kLedMaxRatioWidthCmpHeight = 6;

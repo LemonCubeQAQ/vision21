@@ -9,11 +9,6 @@ using namespace std;
 ArmorDector::ArmorDector()
     :
     enemy_color_(constants::kEnemyColor),
-    time_per_tick_(1.0/getTickFrequency()),    
-    frame_counter_(0),
-    start_tick_(0),
-    end_tick(0),
-    average_tick_per_frame_(0),
     detect_mode_(DetectMode::NONE),
     src_image_(),
     binary_image_(),
@@ -26,8 +21,7 @@ ArmorDector::ArmorDector()
 
 ArmorDector::~ArmorDector(){};
 
-const Vector3f& ArmorDector::GetHitPos(DetectMode detect_mode, cv::Mat& src_image, int64& tick){
-    start_tick_ = tick;
+const Vector3f& ArmorDector::GetHitPos(DetectMode detect_mode, cv::Mat& src_image){
     src_image_ = src_image;
 
     switch(detect_mode){
@@ -54,8 +48,11 @@ const Vector3f& ArmorDector::GetHitPos(DetectMode detect_mode, cv::Mat& src_imag
             break;
     }
 
-    //TODO(YeahooQAQ): Prediction
     return predictor_.GetPredictedTarget();
+}
+
+void ArmorDector::ConfigureParameters(const float& yaw, const float& pitch, int64& tick){
+
 }
 
 bool ArmorDector::GetAllTarget(){
@@ -184,16 +181,14 @@ unsigned short ArmorDector::GetAllArmor(const unsigned short& led_num){
         int RatioWidthCmpHeight;
         float min_distance;
         float min_ratio;
-        float led_width_mul_ratio = constants::kAromorWidthCmpLedWidth * led1.width_;
+        float aormor_width_restrict = constants::kAromorWidthCmpLedWidth * led1.width_;
         for(unsigned short j = i + 1; j < led_num; j++){
-            if(is_selected[i] || is_selected[j]
-                || led1.ratio_ * led_array_[j].ratio_ < 0.0f
-            ) continue;
+            if(is_selected[i] || is_selected[j]) continue;
             const Led& led2 = led_array_[j];
             float length_ratio = led1.length_ / led2.length_;
-            float ratio_delta = abs(abs(led1.ratio_) - abs(led2.ratio_));
+            float ratio_delta = abs(led1.ratio_ - led2.ratio_);
             if(length_ratio < constants::kLedMinLengthRatio || length_ratio > constants::kLedMaxlengthRatio
-                ||  abs(led1.slope_ - led2.slope_) > constants::kLedSlopeDelta, ratio_delta < constants::kLedRatioDelta
+                ||  abs(abs(led1.slope_) - abs(led2.slope_)) > constants::kLedSlopeDelta, ratio_delta < constants::kLedRatioDelta
             ) continue;
             
             Point2i center_delta = led1.center_ - led2.center_;
@@ -203,7 +198,7 @@ unsigned short ArmorDector::GetAllArmor(const unsigned short& led_num){
                 || constants::kLedMaxRatioWidthCmpHeight < RatioWidthCmpHeight
             ) continue;
 
-            if(led_width_mul_ratio < center_distance) continue;
+            if(aormor_width_restrict < center_distance) continue;
             if(index == -1){
                 index = j;
                 min_distance = center_distance;
@@ -318,17 +313,11 @@ void ArmorDector::SolveAngle(Armor& armor, const std::vector<cv::Point2f>& point
             tz = tvecs.ptr<double>(0)[2];
             break;
         }
-/*         case DetectMode::Rune:{
+         case DetectMode::RUNE:{
             //!大能量机关
-            cv::Mat caremaMatrix = Constants::caremaMatrix_shoot;
-            cv::Mat distCoeffs = Constants::distCoeffs_shoot;
-            cv::solvePnP(point3D, point2D, caremaMatrix, distCoeffs, rvecs, tvecs);
 
-            tx = tvecs.ptr<double>(0)[0];
-            ty = -tvecs.ptr<double>(0)[1];
-            tz = tvecs.ptr<double>(0)[2];
             break;
-        } */
+        } 
     }
 
     armor.tx_ = static_cast<float>(tx);

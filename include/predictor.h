@@ -13,7 +13,7 @@ using namespace Eigen;
 class Predictor{
 public:
     Predictor(); 
-    ~Predictor();  
+    ~Predictor();
     void  GetArmorData(
         const DetectMode& mode,
         const bool is_anti_rotation,
@@ -21,7 +21,15 @@ public:
         const Armor& armor_array
     );
     void LostTarget(){lost_target_counter_++;}
-    const Vector3f& GetPredictedTarget(){return predicted_target_;};
+    const Vector3f& GetPredictedTarget(){return predicted_target_;}
+
+private:
+    const double time_per_tick_;    
+    short frame_counter_;
+    int64 start_tick_;
+    int64 end_tick;
+    int64 average_tick_per_frame_;
+
 private:
     bool is_anti_rotation_;
     DetectMode detect_mode_;
