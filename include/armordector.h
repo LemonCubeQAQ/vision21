@@ -19,7 +19,9 @@ public:
 
 public:
     const Vector3f& GetHitPos(DetectMode detect_mode, Mat& src_image);
-    inline void ConfigureParameters(const float& pitch, const float& yaw, int64& tick);
+    inline void ConfigureParameters(const float& pitch, const float& yaw, int64& tick){
+        predictor_.ConfigureData(pitch, yaw, tick);
+    }
 
 private:
     bool GetAllTarget();
@@ -51,11 +53,13 @@ private:
 
 private:
     Predictor predictor_;
-
 private:
+    static bool ledCmpLength(const Led a, const Led b){
+        return a.length_ > b.length_; //长的优先
+    }
     //竖直优先
     static bool ledCmpSlope(const Led a, const Led b){
-        return a.length_ < b.length_; 
+        return a.length_ < b.length_;
     }
     //y优先
     static bool ledCmpY(const Point2f a, const Point2f b){

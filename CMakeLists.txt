@@ -30,7 +30,7 @@ include_directories(
 )
 
 set(CPP_SOURCES 
-    src/main.cpp 
+    src/main.cpp
     src/rm_vision.cpp
     src/DahengCamera.cpp
     src/armordector.cpp

@@ -1,11 +1,14 @@
 #ifndef VARIABLES_H_
 #define VARIABLES_H_
-
 #include <opencv2/opencv.hpp>
+#include<eigen3/Eigen/Eigen>
+#include<Eigen/Core>
+#include<Eigen/Dense>
 //在程序运行期间其值始终保持不变的, 命名时以 “k” 开头, 大小写混合
 
 namespace horizon{
 using namespace cv;
+using namespace Eigen;
 
 //敌方颜色
 enum class EnemyColor{
@@ -21,6 +24,7 @@ enum class DetectMode{
 
 //装甲板模式
 enum class ArmorType{
+    NONE,
     SMALL, //小装甲
     LARGE, //大装甲
     RUNE //大符
@@ -32,18 +36,15 @@ public:
     Armor()
         :   
         armor_type_(ArmorType::SMALL),
-        tx_(0), ty_(0), tz_(0),
-        left_led_{}, right_led_{}
+        left_led_{}, right_led_{}, 
+        vec{}
     {};
     ~Armor(){};
 public:
     ArmorType armor_type_;
     Point2f left_led_[2];     //左灯条
     Point2f right_led_[2];        //右灯条
-
-    float tx_;       //x 轴偏移量
-    float ty_;       //y 轴偏移量
-    float tz_;       //z 轴偏移量
+    Vector3f vec;       //轴偏移量
 
 };
 

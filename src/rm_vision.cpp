@@ -46,7 +46,6 @@ void RmVision::ImageProducer(){
             case DetectMode::ARMOR:{
                 if(camera_ptr_ != nullptr){
                     while(image_buffer_rear_ - image_buffer_front_ > IMGAE_BUFFER);
-
                     if(camera_ptr_->GetMat(image_buffer_[image_buffer_rear_%IMGAE_BUFFER])){
                         time_buffer_[image_buffer_rear_%IMGAE_BUFFER] = getTickCount();       
                         ++image_buffer_rear_;
@@ -54,7 +53,7 @@ void RmVision::ImageProducer(){
                     else{
                         delete camera_ptr_;
                         camera_ptr_ = nullptr;
-                    }                       
+                    }
                 }
                 else{
                     camera_ptr_ = new DaHengCamera;
@@ -71,7 +70,7 @@ void RmVision::ImageProducer(){
                     camera_ptr_->SetExposureTime(constants::kExposureTime);
                     camera_ptr_->SetGain(3, constants::kExposureGain);
                     image_buffer_front_ = 0;
-                    image_buffer_rear_ = 0;                         
+                    image_buffer_rear_ = 0;                
                 }
                 break;
             }
@@ -98,11 +97,11 @@ void RmVision::ImageConsumer(){
         while(image_buffer_rear_ <= image_buffer_front_);
         image_buffer_front_ = image_buffer_rear_-1;
         //Recieve serial information
-        Mat src = image_buffer_[image_buffer_front_%IMGAE_BUFFER].clone();
-        cv::imshow("src", src);
+        Mat& src = image_buffer_[image_buffer_front_%IMGAE_BUFFER];
+        Mat src_show = src.clone();
+        cv::imshow("src", src_show);
         cv::waitKey(1);
 
-        //TODO(YeahooQAQ): If you want use ROI, just do it here and
         armordector.ConfigureParameters(send_pitch_.f, send_yaw_.f, time_buffer_[image_buffer_front_%IMGAE_BUFFER]);
         Eigen::Vector3f pos = armordector.GetHitPos(detect_mode_, src);
 
@@ -111,8 +110,6 @@ void RmVision::ImageConsumer(){
         serial_state_ == SerialState::SEND_DATA;
 
     }
-
-
 }
 
 void RmVision::Serial(){

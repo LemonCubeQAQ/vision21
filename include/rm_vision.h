@@ -1,6 +1,5 @@
 #ifndef RM_VISION_H_
 #define RM_VISION_H_
-#include"debug.h"
 #include"variables.h"
 #include"armordector.h"
 #include"DaHengCamera.h"

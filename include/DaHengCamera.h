@@ -8,6 +8,22 @@
 
 
 class DaHengCamera{
+public:
+    //构造析构函数
+    DaHengCamera();
+    ~DaHengCamera();
+    int StartDevice(int DeviceIndex);
+    bool StartDevice();
+    bool SetResolution();    
+    bool StreamOn();
+    bool SetExposureTime();
+    bool SetExposureTime(unsigned short exp_time);
+    bool SetGain();
+    bool SetGain(int value,int ExpGain);
+    bool Set_BALANCE_AUTO(int value);
+    bool Set_BALANCE();
+    void getImageScale(int & width,int & height);
+    bool GetMat(cv::Mat & Src);    
 private:
     //选择曝光增益通道 
     enum class Channel{ 
@@ -43,22 +59,6 @@ private:
     GX_OPEN_PARAM streamOpenParam;  //图像流
     PGX_FRAME_BUFFER pFrameBuffer;  
 
-public:
-    //构造析构函数
-    DaHengCamera();
-    ~DaHengCamera();
-    int StartDevice(int DeviceIndex);
-    bool StartDevice();
-    bool SetResolution();    
-    bool StreamOn();
-    bool SetExposureTime();
-    bool SetExposureTime(unsigned short exp_time);
-    bool SetGain();
-    bool SetGain(int value,int ExpGain);
-    bool Set_BALANCE_AUTO(int value);
-    bool Set_BALANCE();
-    void getImageScale(int & width,int & height);
-    bool GetMat(cv::Mat & Src);    
 };
 
 #endif
