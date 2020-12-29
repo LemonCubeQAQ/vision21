@@ -299,9 +299,9 @@ void ArmorDector::SolveAngle(Armor& armor, const std::vector<cv::Point2f>& point
         } 
     }
 
-    armor.vec[0] = static_cast<float>(tx);
-    armor.vec[1] = static_cast<float>(ty);
-    armor.vec[2] = static_cast<float>(tz);
+    armor.pos[0] = static_cast<float>(tx) + constants::kOffsetX;
+    armor.pos[1] = static_cast<float>(ty) + constants::kOffsetY;
+    armor.pos[2] = static_cast<float>(tz) + constants::kOffsetZ;
 }
 
 }

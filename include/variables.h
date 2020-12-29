@@ -37,14 +37,14 @@ public:
         :   
         armor_type_(ArmorType::SMALL),
         left_led_{}, right_led_{}, 
-        vec{}
+        pos{}
     {};
     ~Armor(){};
 public:
     ArmorType armor_type_;
     Point2f left_led_[2];     //左灯条
     Point2f right_led_[2];        //右灯条
-    Vector3f vec;       //轴偏移量
+    Vector3f pos;       //轴偏移量
 
 };
 
@@ -97,7 +97,9 @@ const float kRealLargeArmorHeight = 5.5f;
 const float kRealRuneWidth = 24.0f;
 const float kRealRuneHeight = 18.0f;
 
-
+const float kOffsetX = 0.0f;
+const float kOffsetY = 0.0f;
+const float kOffsetZ = 0.0f;
 //相机内参
 static const cv::Mat caremaMatrix_shoot = (
         cv::Mat_<float>(3, 3) << 648.4910,                  0,                         328.2316,
