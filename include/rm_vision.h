@@ -4,6 +4,7 @@
 #include"armordector.h"
 #include"DaHengCamera.h"
 #include<thread>
+#include<mutex>
 #include<iostream>
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
@@ -26,7 +27,7 @@ class RmVision{
 
 enum SerialSize{
     SENT_BYTES_SIZE = 14,
-    READ_BYTES_SIZE = 12
+    READ_BYTES_SIZE = 13
 };
 
 enum BufferSize{
@@ -34,8 +35,9 @@ enum BufferSize{
 };
 
 enum class SerialState{
-    WAIT_DATA,
-    SEND_DATA
+    READ_DATA,
+    SEND_DATA,
+    WATING
 };
 
 union float2uc{
@@ -62,49 +64,63 @@ private:
     static unsigned int image_buffer_rear_;
 
 private:
-    static SerialState serial_state_;
     static DetectMode detect_mode_;
     static float2uc read_pitch_;
     static float2uc read_yaw_;
     static float2uc read_distance_;
     static float2uc send_pitch_;
     static float2uc send_yaw_;
-    static float2uc send_distance_;
+    static uchar firing_rate_;
 
 private:
     static io_service iosev_;
     static serial_port sp_;
+    static SerialState serial_state_;
+    static mutex serial_mutex_;
     unsigned char sent_bytes_[SENT_BYTES_SIZE];
     unsigned char read_bytes_[READ_BYTES_SIZE];
 
 private:
-    inline void ConfigureSendData(){
-        sent_bytes_[1] = send_pitch_.uc[0];
+    inline void ConfigureSendData(const Eigen::Vector3f& pos, const bool& is_find_target_){
+        sent_bytes_[5] = send_pitch_.f < 0.0f ? 0x00:0x01;
+        sent_bytes_[10] = send_yaw_.f < 0.0f ? 0x00:0x01;
+        send_pitch_.f = pos[0] - read_pitch_.f;
+        send_yaw_.f = pos[1] - read_yaw_.f;
+    
+/*         sent_bytes_[1] = send_pitch_.uc[0];
         sent_bytes_[2] = send_pitch_.uc[1];
         sent_bytes_[3] = send_pitch_.uc[2];
         sent_bytes_[4] = send_pitch_.uc[3];
-        sent_bytes_[5] = send_yaw_.uc[0];
-        sent_bytes_[6] = send_yaw_.uc[1];
-        sent_bytes_[7] = send_yaw_.uc[2];
-        sent_bytes_[8] = send_yaw_.uc[3];
-        sent_bytes_[9] = send_distance_.uc[0];
-        sent_bytes_[10] = send_distance_.uc[1];
-        sent_bytes_[11] = send_distance_.uc[2];
-        sent_bytes_[12] = send_distance_.uc[3];
+        sent_bytes_[6] = send_yaw_.uc[0];
+        sent_bytes_[7] = send_yaw_.uc[1];
+        sent_bytes_[8] = send_yaw_.uc[2];
+        sent_bytes_[9] = send_yaw_.uc[3];
+        sent_bytes_[11] = is_find_target_;
+        sent_bytes_[12] = static_cast<uchar>(pos[2]); */
+        sent_bytes_[1] = 1;
+        sent_bytes_[2] = 2;
+        sent_bytes_[3] = 3;
+        sent_bytes_[4] = 4;
+        sent_bytes_[5] = 5;        
+        sent_bytes_[6] = 6;
+        sent_bytes_[7] = 7;
+        sent_bytes_[8] = 8;
+        sent_bytes_[9] = 9;
+        sent_bytes_[10] = 10;
+        sent_bytes_[11] = 11;
+        sent_bytes_[12] = 12;
     }
     inline void ConfigureReadData(){
         read_pitch_.uc[0] = read_bytes_[1];
         read_pitch_.uc[1] = read_bytes_[2];
         read_pitch_.uc[2] = read_bytes_[3];
         read_pitch_.uc[3] = read_bytes_[4];
-        read_yaw_.uc[0] = read_bytes_[5];
-        read_yaw_.uc[1] = read_bytes_[6];
-        read_yaw_.uc[2] = read_bytes_[7];
-        read_yaw_.uc[3] = read_bytes_[8];
-        read_distance_.uc[0] = read_bytes_[9];
-        read_distance_.uc[1] = read_bytes_[10];
-        read_distance_.uc[2] = read_bytes_[11];
-        read_distance_.uc[3] = read_bytes_[12];
+        read_yaw_.uc[0] = read_bytes_[6];
+        read_yaw_.uc[1] = read_bytes_[7];
+        read_yaw_.uc[2] = read_bytes_[8];
+        read_yaw_.uc[3] = read_bytes_[9];
+        firing_rate_ = read_bytes_[11];
+        cout<<"read: \npitch: "<<read_pitch_.f<<" yaw "<<read_yaw_.f<<" "<<firing_rate_<<endl;
     }
 };
 

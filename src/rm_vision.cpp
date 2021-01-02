@@ -10,15 +10,16 @@ int64 RmVision::time_buffer_[] = {};
 unsigned  int RmVision::image_buffer_front_(0);
 unsigned int RmVision::image_buffer_rear_(0);
 
-RmVision::SerialState RmVision::serial_state_(SerialState::WAIT_DATA);
+RmVision::SerialState RmVision::serial_state_(SerialState::WATING);
 RmVision::float2uc RmVision::read_pitch_{};
 RmVision::float2uc RmVision::read_yaw_{};
 RmVision::float2uc RmVision::read_distance_{};
 RmVision::float2uc RmVision::send_pitch_{}; 
 RmVision::float2uc RmVision::send_yaw_{};
-RmVision::float2uc RmVision::send_distance_{};
+uchar RmVision::firing_rate_(0);
 io_service RmVision::iosev_;
 serial_port RmVision::sp_(iosev_, "/dev/base_controller_usb");
+mutex RmVision::serial_mutex_;
 
 RmVision::RmVision()
     :   
@@ -101,41 +102,55 @@ void RmVision::ImageConsumer(){
         Mat src_show = src.clone();
         cv::imshow("src", src_show);
         cv::waitKey(1);
+    
+        serial_mutex_.lock();
+        armordector.ConfigureParameters(read_pitch_.f, read_yaw_.f, firing_rate_, time_buffer_[image_buffer_front_%IMGAE_BUFFER]);
+        serial_mutex_.unlock();
 
-        armordector.ConfigureParameters(send_pitch_.f, send_yaw_.f, time_buffer_[image_buffer_front_%IMGAE_BUFFER]);
         Eigen::Vector3f pos = armordector.GetHitPos(detect_mode_, src);
 
-        while(serial_state_ == SerialState::SEND_DATA);
-        ConfigureSendData();
-        serial_state_ == SerialState::SEND_DATA;
-
+        //serial_mutex_.lock();
+        ConfigureSendData(pos, armordector.IsFindTarget());
+        serial_state_ = SerialState::SEND_DATA;
+        //serial_mutex_.unlock();
     }
 }
 
 void RmVision::Serial(){
-
+    int count_read = 0;
+    int count_sent = 0;
+    int err_Count = 0;
     // 向串口读数据
     while(true){
-        read(sp_, buffer(read_bytes_));
-
-        if(read_bytes_[0] == 0xaa && read_bytes_[READ_BYTES_SIZE-1] == 0xbb){
-            //TODO(YeahooQAQ): get the data from the read_bytes_
+//        read(sp_, buffer(read_bytes_));
+/*         if(read_bytes_[0] == 0xaa && read_bytes_[READ_BYTES_SIZE-1] == 0xbb){
+            serial_mutex_.lock();
             ConfigureReadData();
+            serial_mutex_.unlock();
+            count_read++;
         }
         else{
+            err_Count++;
+            cout<<"err: "<<err_Count<<"\n";
             char trash[1] = {0x00};
-            for(int i = 0; i < READ_BYTES_SIZE; i++){ cout<<hex<<read_bytes_[i]<<" "; }
             do{
                 read(sp_, buffer(trash));
             }while(trash[0] != 0xbb);
-        }
-
+        }      */
         if(serial_state_ == SerialState::SEND_DATA){
+            sent_bytes_[0] = 0xaa;
+            sent_bytes_[SENT_BYTES_SIZE-1] = 0xbb;
             write(sp_, buffer(sent_bytes_, SENT_BYTES_SIZE));
-            serial_state_ = SerialState::WAIT_DATA;
+            for(int i = 0; i < SENT_BYTES_SIZE-1; i++){
+                cout<<hex<<sent_bytes_[i]<<" ";
+            }
+            cout<<'\n';
+            serial_state_ = SerialState::WATING;
+            count_sent++;
         }
-        iosev_.run();
+        cout<<"serial count: "<<dec<<count_read<<" "<<count_sent<<" "<<err_Count<<'\n';
     }
+    iosev_.run();
 }
 
 

@@ -14,7 +14,7 @@ Predictor::Predictor()
     detect_mode_(DetectMode::NONE),
     lost_target_counter_(0),
     locked_target_type_(ArmorType::NONE),
-    locked_target_{},
+    locked_target_(Eigen::Vector3f::Ones()),
     firing_rate_(6.0f),
     dur_time_(0.0f),
     locked_pitch_(0.0f),
@@ -22,9 +22,9 @@ Predictor::Predictor()
     pitch_(0.0f),
     yaw_(0.0f),
     kalman_filter_(),
-    predicted_target_(),
-    pitch_rotation_matrix_(),
-    yaw_rotation_matrix_()
+    predicted_target_(Eigen::Vector3f::Ones()),
+    pitch_rotation_matrix_(Eigen::Matrix3f::Identity(3,3)),
+    yaw_rotation_matrix_(Eigen::Matrix3f::Identity(3,3))
 {}
 
 Predictor::~Predictor(){}
@@ -33,7 +33,6 @@ void  Predictor::GetArmorData(const Armor armor_array[], const unsigned short& a
     if(is_find_target_){
         unsigned short selected_index = 0;
         float min_distance = 0x7F800000;
-        cout<<"init: "<<min_distance;
         for(int index = 0; index < armor_num; index++){ 
             const Armor& armor = armor_array[index];
             if(armor.armor_type_ == locked_target_type_){
@@ -101,7 +100,7 @@ void Predictor::SetRotationMatrix(const float& pitch, const float& yaw){
 
 }
 
-const Vector3f Predictor::GetPredictedTarget(){
+const Vector3f& Predictor::GetPredictedTarget(){
     predicted_target_ =  yaw_rotation_matrix_.transpose() * pitch_rotation_matrix_.transpose() * predicted_target_;
     predicted_target_ = pitch_rotation_matrix_ * predicted_target_;
     float h = predicted_target_[1] + 4.9f * dur_time_ * dur_time_;
@@ -109,8 +108,8 @@ const Vector3f Predictor::GetPredictedTarget(){
     
     float pitch =atan(h/s);
     float yaw = atan(predicted_target_[0]/predicted_target_[2]);
-
-    return Vector3f(pitch, yaw, s);
+    predicted_target_ = Vector3f(pitch, yaw, s);
+    return predicted_target_;
 }
 
 

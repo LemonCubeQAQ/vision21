@@ -5,10 +5,11 @@ namespace horizon{
 KalmanFilter::KalmanFilter()
     : 
     R(9), R_p(25),  q(81), p(100),
-    H(Eigen::Vector3f(1.0,0.0,0.0)),
+    H(Eigen::Vector3f(1.0f,0.0f,0.0f)),
     x(Eigen::Vector3f::Ones()), x_(Eigen::Vector3f::Ones()),
     y(Eigen::Vector3f::Ones()), y_(Eigen::Vector3f::Ones()),
     z(Eigen::Vector3f::Ones()), z_(Eigen::Vector3f::Ones()),
+    Kx(),Ky(),Kz(),
     Px(Eigen::Matrix3f::Identity(3,3)), Py(Eigen::Matrix3f::Identity(3,3)), Pz(Eigen::Matrix3f::Identity(3,3)),
     Px_(Eigen::Matrix3f::Identity(3,3)), Py_(Eigen::Matrix3f::Identity(3,3)), Pz_(Eigen::Matrix3f::Identity(3,3)),
     E(Eigen::Matrix3f::Identity(3,3)){

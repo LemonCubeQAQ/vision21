@@ -21,7 +21,7 @@ ArmorDector::ArmorDector()
 
 ArmorDector::~ArmorDector(){};
 
-const Vector3f& ArmorDector::GetHitPos(DetectMode detect_mode, cv::Mat& src_image){
+const Vector3f ArmorDector::GetHitPos(DetectMode detect_mode, cv::Mat& src_image){
     src_image_ = src_image;
 
     switch(detect_mode){

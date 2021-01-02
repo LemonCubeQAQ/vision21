@@ -18,11 +18,11 @@ public:
     ~ArmorDector();
 
 public:
-    const Vector3f& GetHitPos(DetectMode detect_mode, Mat& src_image);
-    inline void ConfigureParameters(const float& pitch, const float& yaw, int64& tick){
-        predictor_.ConfigureData(pitch, yaw, tick);
+    const Vector3f GetHitPos(DetectMode detect_mode, Mat& src_image);
+    inline void ConfigureParameters(const float& pitch, const float& yaw, const float& firing_rate, int64& tick){
+        predictor_.ConfigureData(pitch, yaw, 6.0f ,tick);
     }
-
+    const bool& IsFindTarget() const {return predictor_.IsFindTarget();} 
 private:
     bool GetAllTarget();
     bool GetAllRune();

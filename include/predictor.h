@@ -17,6 +17,7 @@ public:
     ~Predictor();
     void  GetArmorData(const Armor armor_array[], const unsigned short& armor_num);
     void  GetRuneData(const Armor armor_array[], const unsigned short& armor_num);
+    const bool& IsFindTarget() const {return is_find_target_;} 
     void ConfigureData(const float& pitch, const float& yaw, const float& firing_rate, const int64& tick){
         start_tick_ = tick;
         pitch_ = pitch * trans2theta_;
