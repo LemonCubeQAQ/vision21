@@ -58,25 +58,25 @@ private:
     DaHengCamera* camera_ptr_;
 
 private:
-    static Mat image_buffer_[IMGAE_BUFFER];
-    static int64 time_buffer_[IMGAE_BUFFER];
-    static unsigned int image_buffer_front_;
-    static unsigned int image_buffer_rear_;
+    Mat image_buffer_[IMGAE_BUFFER];
+    int64 time_buffer_[IMGAE_BUFFER];
+    unsigned int image_buffer_front_;
+    unsigned int image_buffer_rear_;
 
 private:
-    static DetectMode detect_mode_;
-    static float2uc read_pitch_;
-    static float2uc read_yaw_;
-    static float2uc read_distance_;
-    static float2uc send_pitch_;
-    static float2uc send_yaw_;
-    static uchar firing_rate_;
+    DetectMode detect_mode_;
+    float2uc read_pitch_;
+    float2uc read_yaw_;
+    float2uc read_distance_;
+    float2uc send_pitch_;
+    float2uc send_yaw_;
+    uchar firing_rate_;
 
 private:
-    static io_service iosev_;
-    static serial_port sp_;
-    static SerialState serial_state_;
-    static mutex serial_mutex_;
+    io_service iosev_;
+    serial_port sp_;
+    SerialState serial_state_;
+    mutex serial_mutex_;
     unsigned char sent_bytes_[SENT_BYTES_SIZE];
     unsigned char read_bytes_[READ_BYTES_SIZE];
 

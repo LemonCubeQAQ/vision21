@@ -4,26 +4,20 @@
 
 namespace horizon{ 
 
-DetectMode RmVision::detect_mode_(DetectMode::ARMOR);
-Mat RmVision::image_buffer_[] = {};
-int64 RmVision::time_buffer_[] = {};
-unsigned  int RmVision::image_buffer_front_(0);
-unsigned int RmVision::image_buffer_rear_(0);
-
-RmVision::SerialState RmVision::serial_state_(SerialState::WATING);
-RmVision::float2uc RmVision::read_pitch_{};
-RmVision::float2uc RmVision::read_yaw_{};
-RmVision::float2uc RmVision::read_distance_{};
-RmVision::float2uc RmVision::send_pitch_{}; 
-RmVision::float2uc RmVision::send_yaw_{};
-uchar RmVision::firing_rate_(0);
-io_service RmVision::iosev_;
-serial_port RmVision::sp_(iosev_, "/dev/base_controller_usb");
-mutex RmVision::serial_mutex_;
-
 RmVision::RmVision()
     :   
     camera_ptr_(nullptr),
+    image_buffer_{}, 
+    time_buffer_{},
+    image_buffer_front_(0),
+    image_buffer_rear_(0),
+    detect_mode_(DetectMode::ARMOR),
+    read_pitch_(), read_yaw_(),
+    read_distance_(),
+    send_pitch_(), send_yaw_(),
+    firing_rate_(),
+    iosev_(), sp_(iosev_, "/dev/base_controller_usb"),
+    serial_state_(SerialState::WATING), serial_mutex_(),
     sent_bytes_{},  
     read_bytes_{}{
     sp_.set_option(serial_port::baud_rate(115200));                              // 设置波特率

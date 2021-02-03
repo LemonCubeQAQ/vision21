@@ -4,9 +4,9 @@ using namespace horizon;
 
 int main(){
     RmVision vision;
-    std::thread thread1(&RmVision::ImageProducer, vision);
-    std::thread thread2(&RmVision::ImageConsumer, vision);
-    std::thread thread3(&RmVision::Serial, vision);
+    std::thread thread1(RmVision::ImageProducer, std::ref(vision));
+    std::thread thread2(RmVision::ImageConsumer, std::ref(vision));
+    std::thread thread3(RmVision::Serial, std::ref(vision));
 
     thread1.join();
     thread2.join();
